@@ -3,15 +3,23 @@ var Token = "";
 const axios = require('axios');
 const readline = require('readline');
 // const prompt = require('prompt');
-const rl1 = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+main();
+
+
+
+function main(){
 console.log("1. Create a board.");
 console.log("2. Create a list on a board.");
 console.log("3. Delete a board.");
 console.log("4. View all boards.");
 console.log("5. Create card on list.");
+console.log("6. Remove card from list.");
+console.log("7. Rename a list.");
+console.log("8. Rename a card on a list.");
+const rl1 = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 rl1.question('Select an option by entering the cooresponding number. ', (answer) => {
   rl1.close();
   switch(answer){
@@ -30,10 +38,20 @@ rl1.question('Select an option by entering the cooresponding number. ', (answer)
     case '5':
       createCardOnList();
       break;
+    case '6':
+      removeCardFromList();
+      break;
+    case '7':
+      renameList();
+      break;
+    case '8':
+      renameCardOnList();
+      break;
     default:
       console.log("Sorry, that's not an option.");
   }
 });
+}
 
 
 // console.log("1. Create a board.");
@@ -102,7 +120,7 @@ function deleteBoard(){
   axios.get('https://api.trello.com/1/members/me/boards?key=' + APIKey + '&token=' + Token).then(response => {
   console.log("Here are all your boards.");
   for(var i = 0; i < response.data.length; i++){
-    console.log(i+'. ' + response.data[i].name);
+    console.log((i+1)+'. ' + response.data[i].name);
   }
   const rl = readline.createInterface({
     input: process.stdin,
@@ -111,7 +129,7 @@ function deleteBoard(){
   
   rl.question('Select a board to delete. ', (answer) => {
     rl.close();
-    axios.delete('https://api.trello.com/1/boards/' + response.data[answer].id + '?key=' + APIKey + '&token=' + Token);
+    axios.delete('https://api.trello.com/1/boards/' + response.data[(answer-1)].id + '?key=' + APIKey + '&token=' + Token);
   });
 }).catch(error => {
   console.log(error);
@@ -139,9 +157,8 @@ function createListOnBoard(){
     });
     rl3.question('What do you want to name the list? ', (name)=> {
       rl3.close();
-      console.log('https://api.trello.com/1/lists?name=' + name + '&idBoard=' + boardID + '&key=' + APIKey + '&token=' + Token)
+      //console.log('https://api.trello.com/1/lists?name=' + name + '&idBoard=' + boardID + '&key=' + APIKey + '&token=' + Token)
     axios.post('https://api.trello.com/1/lists?name=' + name + '&idBoard=' + boardID + '&key=' + APIKey + '&token=' + Token);
-    //try adding a list named (name) to the board with the id (answer)
   })
     
 
@@ -204,6 +221,150 @@ function createCardOnList(){
         rl2.question('What would you like to name the card? ', (cardName)=>{
           rl2.close();
           axios.post('https://api.trello.com/1/cards?name=' + cardName + '&idList=' + listID + '&keepFromSource=all&key=' + APIKey + '&token=' + Token);
+        })
+
+      })
+    })
+  })
+
+})
+}
+
+function removeCardFromList(){
+  axios.get('https://api.trello.com/1/members/me/boards?key=' + APIKey + '&token=' + Token).then(response => {
+  console.log("Here are all your boards.");
+  for(var i = 0; i < response.data.length; i++){
+    console.log((i+1)+'. ' + response.data[i].name);
+  }
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  rl.question('Select a board to view its lists. ', (board) => {
+    rl.close();
+    axios.get('https://api.trello.com/1/boards/' + response.data[(board-1)].id + '/lists?key=' + APIKey + '&token=' + Token).then(response => {
+      for(var i = 0; i < response.data.length; i++){
+        console.log((i+1)+'. ' + response.data[i].name);
+      }
+      const rl1 = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
+      rl1.question('Select a list to view its cards. ', (list) =>{
+        rl1.close();
+        var listID = response.data[(list-1)].id;
+        
+        axios.get('https://api.trello.com/1/lists/' + listID + '/cards?key=' + APIKey + '&token=' + Token).then(response =>{
+          for(var j = 0; j < response.data.length; j++){
+            console.log((j+1)+ '. ' + response.data[j].name);
+          }
+          const rl2 = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+          });
+          rl2.question('Select a card to remove. ', (card) =>{
+            rl2.close();
+            var cardID = response.data[(card-1)].id;
+            axios.delete('https://api.trello.com/1/cards/' + cardID + '?key=' + APIKey + '&token=' + Token);
+          })
+        })
+
+      })
+    })
+  })
+
+})
+}
+
+function renameList(){
+  axios.get('https://api.trello.com/1/members/me/boards?key=' + APIKey + '&token=' + Token).then(response => {
+  console.log("Here are all your boards.");
+  for(var i = 0; i < response.data.length; i++){
+    console.log((i+1)+'. ' + response.data[i].name);
+  }
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  rl.question('Select a board to view its lists. ', (board) => {
+    rl.close();
+    axios.get('https://api.trello.com/1/boards/' + response.data[(board-1)].id + '/lists?key=' + APIKey + '&token=' + Token).then(response => {
+      for(var i = 0; i < response.data.length; i++){
+        console.log((i+1)+'. ' + response.data[i].name);
+      }
+      const rl1 = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
+      rl1.question('Select a list to rename. ', (list) =>{
+        rl1.close();
+        var listID = response.data[(list-1)].id;
+        const rl2 = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout
+        });
+
+        rl2.question('What would you like to name the list? ', (listName)=>{
+          rl2.close();
+          axios.put('https://api.trello.com/1/lists/' + listID + '/name?value=' + listName + '&key=' + APIKey + '&token=' + Token)
+        })
+      })
+    })
+  })
+})
+}
+
+function renameCardOnList(){
+  axios.get('https://api.trello.com/1/members/me/boards?key=' + APIKey + '&token=' + Token).then(response => {
+  console.log("Here are all your boards.");
+  for(var i = 0; i < response.data.length; i++){
+    console.log((i+1)+'. ' + response.data[i].name);
+  }
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  rl.question('Select a board to view its lists. ', (board) => {
+    rl.close();
+    axios.get('https://api.trello.com/1/boards/' + response.data[(board-1)].id + '/lists?key=' + APIKey + '&token=' + Token).then(response => {
+      for(var i = 0; i < response.data.length; i++){
+        console.log((i+1)+'. ' + response.data[i].name);
+      }
+      const rl1 = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
+      rl1.question('Select a list to view its cards. ', (list) =>{
+        rl1.close();
+        // if(response.data.length <= 0){
+        //   return;
+        // }
+        var listID = response.data[(list-1)].id;
+        
+        axios.get('https://api.trello.com/1/lists/' + listID + '/cards?key=' + APIKey + '&token=' + Token).then(response =>{
+          for(var j = 0; j < response.data.length; j++){
+            console.log((j+1)+ '. ' + response.data[j].name);
+          }
+          const rl2 = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+          });
+          rl2.question('Select a card to rename. ', (card) =>{
+            rl2.close();
+            var cardID = response.data[(card-1)].id;
+            
+            const rl3 = readline.createInterface({
+              input: process.stdin,
+              output: process.stdout
+            });
+            rl3.question('What would you like to name it? ', (name) =>{
+              rl3.close();
+              axios.put('https://api.trello.com/1/cards/' + cardID + '?name=' + name + '&key=' + APIKey + '&token=' + Token)
+            })
+          })
         })
 
       })
